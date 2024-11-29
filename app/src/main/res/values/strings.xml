@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">u-blox Bluetooth Low Energy</string>
+
+    <string name="ble_not_supported">Bluetooth Low Energy is not supported</string>
+    <string name="label_data">Data:</string>
+    <string name="label_device_address">Device address:</string>
+    <string name="label_state">State:</string>
+    <string name="no_data">No data</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="error_bluetooth_not_supported">Bluetooth is not supported.</string>
+
+    <string name="unknown_device">Unknown device</string>
+    <string name="unknown_characteristic">Unknown characteristic</string>
+    <string name="unknown_service">Unknown service</string>
+
+    <!-- Menu items -->
+    <string name="menu_connect">Connect</string>
+    <string name="menu_disconnect">Disconnect</string>
+    <string name="menu_scan">Scan</string>
+    <string name="menu_stop">Stop</string>
+
+
+    <string name="title_section1">Overview</string>
+    <string name="title_section2">Services</string>
+    <string name="title_section3">Chat</string>
+    <string name="title_section4">Test</string>"
+
+    <string name="overview_temperature">Temperature (°C)</string>
+    <string name="title_activity_basic_ble">BasicBluetoothLowEnergyActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="bonded_state">bonded</string>
+    <string name="bonding_state">bonding</string>
+
+    <string name="status_disconnected">disconnected</string>
+    <string name="status_connecting">connecting...</string>
+    <string name="status_discovered">services discovered</string>
+    <string name="status_chat_available">chat available</string>
+    <string name="status_sps_available">sps available</string>
+    <string name="status_fifo_unavailable">fifo characteristc not found!</string>
+    <string name="status_fifo_credits_unavailable">credits and/or fifo characteristcs not found!</string>
+    <string name="not_available">N/A</string>
+    <string name="button_start">Start</string>
+    <string name="logs_tittle">Logs</string>
+    <string name="ip_address_tittle">IP Address</string>
+    <string name="port_tittle">Port</string>
+    <string name="port_hint">servers port</string>
+    <string name="remote_start_button">Stop</string>
+    <string name="remote_stop_button">Start</string>
+
+    <string-array name="conn_prio">
+        <item>BALANCED</item>
+        <item>HIGH</item>
+        <item>LOW POWER</item>
+    </string-array>
+    <string name="location_permission_toast">Location required to scan for low energy devices!</string>
+    <string name="scan_permission_toast">Scan required to scan for low energy devices!</string>
+    <string name="connect_permission_toast">Connect required to connect low energy devices!</string>
+    <string name="enable_permission_toast">Connect required to enable Bluetooth!</string>
+    <string name="connect_retry_toast">Permission granted! Please retry connecting.</string>
+    <string name="send_with_cr">Send CR</string>
+    <string name="mesh_proxy">Mesh Proxy</string>
+    <string name="title_activity_mesh">MeshActivity</string>
+
+    <string name="filterTextHint">Filter</string>
+    <string name="checkBoxSpsText">SPS</string>
+    <string name="checkBoxMeshText">Mesh</string>
+
+    <string name="keyDialogText">Enter Mesh Keys</string>
+    <string name="networkKeyText">Network Key</string>
+    <string name="applicationKeyText">Application Key</string>
+
+    <string name="joinMeshButton">Join Mesh Network</string>
+
+    <string name="reconnectMeshButton">Reconnect</string>
+    <string name="closeMeshButton">Back to Scan</string>
+    <string name="connectionDropDescription">The connection to proxy was unexpectedly closed! Click Reconnect to attempt to re-join the netowork or click Back to Scan to look for a new proxy.</string>
+</resources>
