@@ -363,6 +363,7 @@ public class MBP_STRUCTS {
     final static int UDL1_PARAM_CAPDETECTPARAM_OFFSET = (UDL1_PARAM_EEPROM_SIZE - 32);
     final static byte PGM_PARAM_VERSION = 0;
     final static int FAULT_HISTORY_SIZE = 8;
+    final static int PARAM_SURVEY_PROFILE_SIZE = 3;
     final static byte BOARDTYPE_UNKNOWN = -1;
     final static byte BOARDTYPE_G1 = 0;
     final static byte BOARDTYPE_G2 = 1;
@@ -401,7 +402,37 @@ public class MBP_STRUCTS {
     final static short CONFIGFLAGSEXT_LOCKFASTSAMPLING_100MS = 0x0008; /*Start fast sampling relative to a 100ms boundary*/
     final static int PARAM_CHANNEL_DC = 0;
     final static int PARAM_CHANNEL_AC = 1;
-    final static int PARAM_NOTES_SIZE = 105;
+    final static int PARAM_NOTES_SIZE = 256;
+    /* Survey Modes */
+    final static int SURVEY_MODE_DISABLED = 0x00;
+    final static int MM_DC_VOLT = 0x01;
+    final static int MM_AC_VOLT = 0x02;
+    final static int MM_AC_DC_COMBINED = 0x03;
+    final static int CIS = 0x04;
+    final static int MM_DCV_SHUNT = 0x05;
+    final static int MM_ACV_SHUNT = 0x06;
+    final static int MM_AC_DC_SHUNT_COMBINED = 0x07;
+    final static int DCVG = 0x08;
+    final static int ACVG = 0x09;
+    final static int CIS_DCVG_COMBINED = 0x0A;
+    final static int CIS_ACVG_COMBINED = 0x0B;
+    /* Datalog Modes */
+    final static int DATALOG_MODE_DISABLED = 0x00;
+    final static int DATALOG_DCV = 0x0C;
+    final static int DATALOG_ACV = 0x0D;
+    final static int DATALOG_AC_DC_COMBINED = 0x0E;
+    final static int DATALOG_DCV_SHUNT = 0x0F;
+    final static int DATALOG_ACV_SHUNT = 0x10;
+    final static int DATALOG_AC_DC_SHUNT_COMBINED = 0x11;
+    /* Ranges */
+    final static int RANGE_DISABLED = 0x00;
+    final static int CH1_AC_DC_AUTO = 0x01;
+    final static int CH1_AC_3V5_DC_5V = 0x02;
+    final static int CH1_AC_17V5_DC_25V = 0x03;
+    final static int CH1_AC_175V_DC_250V = 0x04;
+    final static int CH2_AC_DC_AUTO = 0x05;
+    final static int CH2_AC_35MV_DC_50MV_AUTO = 0x06;
+    final static int CH2_AC_350MV_DC_500MV_AUTO = 0x06;
     private final static String TAG = Mbp.class.getSimpleName();
 
     static int BV(int val) { // bit value
@@ -831,51 +862,41 @@ public class MBP_STRUCTS {
     }
 
     final static class T_PARAM_PARAMETERS implements T_STRUCT<T_PARAM_PARAMETERS> {
-        static final int size = 304;
+        static final int size = 512;
 
         byte paramVersion = PARAM_VERSION;
-        short configFlags = CONFIGFLAGS_DCENABLED;
+        int systemFlags = 0;
+        int btParingCode = 123456;
+        int btShutdownTimer = 0;
+        byte unitName[] = new byte[32];
 
-        int samplingCyclePeriod = 1000; /* Number of milliseconds between readings */
-        int samplingCyclePeriodFast = 100; /* Number of milliseconds between fast sampling mode readings, must be 100ms or greater */
-        int samplingFastDuration = 60; /* Number of seconds for a fast sampling mode*/
-        int samplingFastInterval = 30 * 60; /* Number of seconds between fast sampling groups */
+        /* T_PARAM_SURVEY_PROFILE */
+        byte surveyMode = MM_DC_VOLT;
+        byte ch1RangeSurvey = CH1_AC_DC_AUTO;
+        byte ch2RangeSurvey = CH2_AC_DC_AUTO;
 
+        /* T_PARAM_DATALOG_PROFILE */
+        byte datalogMode = DATALOG_DCV;
+        byte ch1RangeDatalog = CH1_AC_DC_AUTO;
+        byte ch2RangeDatalog = CH2_AC_DC_AUTO;
+        short waveformCaptureFrequency = 10;
+        byte waveformInterval = 1;
+        byte waveformPeriod = 10;
+        int unixStartTime = 0;
+        int unixEndTime = 0;
+        short interruptionOnTime = 3000;
+        short interruptionOffTime = 1000;
+        short interruptionOnToOffOffset = 100;
+        short interruptionOffToOnOffset = 100;
+        byte interruptionOnFirst = 0;
 
-        short interruptionCycleTime = 10000; /* Future use for sync to interruption cycles (ms) */
-        short interruptionOffTime = 1000; /* Future use for sync to interruption cycles (ms) */
-        short interruptionOffToOnOffset = 100; /* Future use for sync to interruption cycles (ms) */
-        short interruptionOnToOffOffset = 100; /* Future use for sync to interruption cycles (ms) */
-        short interruptionUTCOffset = 0; /* Future use for sync to interruption cycles (ms) */
-        byte interruptionOnFirst = 0; /* Future use for sync to interruption cycles (ms) */
-
-        byte rangeSelect = 2; /*0=low, 1=med, 2=high*/
-        float lowLimit[] = {-1000.0f, 1000.0f};
-        float highLimit[] = {-1000.0f, 1000.0f};
-        float scaleFactor[] = {1.0f, 1.0f};
-        float offsetFactor[] = {0.0f, 0.0f};
-
-        short batteryLowThreshold = 3150;
-        short batteryWarnThreshold = 3300;
-
+        byte mode = 0x02; /* Disabled 0x00, Survey 0x01, Datalog 0x02 */
+        short firmwareVerParamWrite = 102; /* Used to flag a firmware to update any changed areas in the configuration */
+        int gpsRtcUpdateInterval = 3600;
+        int tcplStationSeries = 0;
+        int chainage = 0; /* number of meters from the station */
         byte notes[] = new byte[PARAM_NOTES_SIZE]; //Notes field
-
-        short samplingCycleOffset = 0; /* Number of milliseconds to delay sampling on normal sampling mode (v1.16 addition)*/
-
-        short configFlagsExtended = 0; /* Extended config flags */
-
-        short timeZoneOffsetMins = 0; /* Time zone offset minutes from UTC */
-
-        short minimumEHPE = 80; //Minimum EHPE for position recording (fixed point with 0.1m resolution), 2.5 to 200.0 range
-        short minimumEHPEWaitTimeSec = 300; //Maximum number of seconds to wait for a good EHPE (3600s max, 300s nom)
-
-        byte lockedFastSamplingOffsetMs = 0; //Number of milliseconds to offset from 100ms boundary before starting fast sampling (0-95ms)
-
-        int delayStartSec = 0; //Delay before starting acquisition
-
-        byte spare8[] = new byte[1]; //For future use so we don't have to bump the parameter version number for minor changes
-        int spare[] = new int[28]; //For future use so we don't have to bump the parameter version number for minor changes
-        short firmwareVerParamWrite = 116; //Used to flag a firmware to update any changed areas in the configuration
+        byte spare8[] = new byte[167]; //For future use so we don't have to bump the parameter version number for minor changes
         short crc16 = 0;
 
         T_PARAM_PARAMETERS() {
@@ -887,56 +908,56 @@ public class MBP_STRUCTS {
 
         T_PARAM_PARAMETERS(T_PARAM_PARAMETERS that) {
             this.paramVersion = that.paramVersion;
-            this.configFlags = that.configFlags;
+            this.systemFlags = that.systemFlags;
 
-            this.samplingCyclePeriod = that.samplingCyclePeriod; /* Number of milliseconds between readings */
-            this.samplingCyclePeriodFast = that.samplingCyclePeriodFast; /* Number of milliseconds between fast sampling mode readings, must be 100ms or greater */
-            this.samplingFastDuration = that.samplingFastDuration; /* Number of seconds for a fast sampling mode*/
-            this.samplingFastInterval = that.samplingFastInterval; /* Number of seconds between fast sampling groups */
-            this.interruptionCycleTime = that.interruptionCycleTime; /* Future use for sync to interruption cycles (ms) */
+            //this.samplingCyclePeriod = that.samplingCyclePeriod; /* Number of milliseconds between readings */
+            //this.samplingCyclePeriodFast = that.samplingCyclePeriodFast; /* Number of milliseconds between fast sampling mode readings, must be 100ms or greater */
+            //this.samplingFastDuration = that.samplingFastDuration; /* Number of seconds for a fast sampling mode*/
+            //this.samplingFastInterval = that.samplingFastInterval; /* Number of seconds between fast sampling groups */
+            this.interruptionOnTime = that.interruptionOnTime;
             this.interruptionOffTime = that.interruptionOffTime; /* Future use for sync to interruption cycles (ms) */
             this.interruptionOffToOnOffset = that.interruptionOffToOnOffset; /* Future use for sync to interruption cycles (ms) */
             this.interruptionOnToOffOffset = that.interruptionOnToOffOffset; /* Future use for sync to interruption cycles (ms) */
-            this.interruptionUTCOffset = that.interruptionUTCOffset; /* Future use for sync to interruption cycles (ms) */
+            //this.interruptionUTCOffset = that.interruptionUTCOffset; /* Future use for sync to interruption cycles (ms) */
             this.interruptionOnFirst = that.interruptionOnFirst; /* Future use for sync to interruption cycles (ms) */
-            this.rangeSelect = that.rangeSelect; /*0=low, 1=med, 2=high*/
-            System.arraycopy(that.lowLimit, 0, this.lowLimit, 0, 2);
-            System.arraycopy(that.highLimit, 0, this.highLimit, 0, 2);
-            System.arraycopy(that.scaleFactor, 0, this.scaleFactor, 0, 2);
-            System.arraycopy(that.offsetFactor, 0, this.offsetFactor, 0, 2);
-            this.batteryLowThreshold = that.batteryLowThreshold;
-            this.batteryWarnThreshold = that.batteryWarnThreshold;
+            //this.rangeSelect = that.rangeSelect; /*0=low, 1=med, 2=high*/
+            //System.arraycopy(that.lowLimit, 0, this.lowLimit, 0, 2);
+            //System.arraycopy(that.highLimit, 0, this.highLimit, 0, 2);
+            //System.arraycopy(that.scaleFactor, 0, this.scaleFactor, 0, 2);
+            //System.arraycopy(that.offsetFactor, 0, this.offsetFactor, 0, 2);
+            //this.batteryLowThreshold = that.batteryLowThreshold;
+            //this.batteryWarnThreshold = that.batteryWarnThreshold;
             System.arraycopy(that.notes, 0, this.notes, 0, PARAM_NOTES_SIZE);
-            this.samplingCycleOffset = that.samplingCycleOffset; /* Number of milliseconds to delay sampling on normal sampling mode (v1.16 addition)*/
-            this.configFlagsExtended = that.configFlagsExtended; /* Extended config flags */
-            this.timeZoneOffsetMins = that.timeZoneOffsetMins; /* Time zone offset minutes from UTC */
-            this.minimumEHPE = that.minimumEHPE; //Minimum EHPE for position recording (fixed point with 0.1m resolution), 2.5 to 200.0 range
-            this.minimumEHPEWaitTimeSec = that.minimumEHPEWaitTimeSec; //Maximum number of seconds to wait for a good EHPE (3600s max, 300s nom)
-            this.lockedFastSamplingOffsetMs = that.lockedFastSamplingOffsetMs; //Number of milliseconds to offset from 100ms boundary before starting fast sampling (0-95ms)
-            this.delayStartSec = that.delayStartSec; //Delay before starting acquisition
+            //this.samplingCycleOffset = that.samplingCycleOffset; /* Number of milliseconds to delay sampling on normal sampling mode (v1.16 addition)*/
+            //this.timeZoneOffsetMins = that.timeZoneOffsetMins; /* Time zone offset minutes from UTC */
+            //this.minimumEHPE = that.minimumEHPE; //Minimum EHPE for position recording (fixed point with 0.1m resolution), 2.5 to 200.0 range
+            //this.minimumEHPEWaitTimeSec = that.minimumEHPEWaitTimeSec; //Maximum number of seconds to wait for a good EHPE (3600s max, 300s nom)
+            //this.lockedFastSamplingOffsetMs = that.lockedFastSamplingOffsetMs; //Number of milliseconds to offset from 100ms boundary before starting fast sampling (0-95ms)
+            //this.delayStartSec = that.delayStartSec; //Delay before starting acquisition
             System.arraycopy(that.spare8, 0, this.spare8, 0, 1);
-            System.arraycopy(that.spare, 0, this.spare, 0, 28);
+            //System.arraycopy(that.spare, 0, this.spare, 0, 28);
             this.firmwareVerParamWrite = that.firmwareVerParamWrite;
             this.crc16 = that.crc16;
         }
 
         @Override
         public void parse(ByteBuffer buffer) {
+            /*
             int startPosition = buffer.position();
 
             this.paramVersion = buffer.get();
-            this.configFlags = buffer.getShort();
+            this.systemFlags = buffer.getInt();
 
             this.samplingCyclePeriod = buffer.getInt();
             this.samplingCyclePeriodFast = buffer.getInt();
             this.samplingFastDuration = buffer.getInt();
             this.samplingFastInterval = buffer.getInt();
 
-            this.interruptionCycleTime = buffer.getShort();
+            this.interruptionOnTime = buffer.getShort();
             this.interruptionOffTime = buffer.getShort();
             this.interruptionOffToOnOffset = buffer.getShort();
             this.interruptionOnToOffOffset = buffer.getShort();
-            this.interruptionUTCOffset = buffer.getShort();
+            //this.interruptionUTCOffset = buffer.getShort();
             this.interruptionOnFirst = buffer.get();
 
             this.rangeSelect = buffer.get();
@@ -959,7 +980,6 @@ public class MBP_STRUCTS {
                 this.notes[i] = buffer.get();
             }
             this.samplingCycleOffset = buffer.getShort();
-            this.configFlagsExtended = buffer.getShort();
             this.timeZoneOffsetMins = buffer.getShort();
             this.minimumEHPE = buffer.getShort();
             this.minimumEHPEWaitTimeSec = buffer.getShort();
@@ -977,26 +997,30 @@ public class MBP_STRUCTS {
             if (buffer.position() - startPosition != size) {
                 Log.e(TAG, "Parsing error, mismatched size. Position " + buffer.position() + " != Size " + size);
             }
+
+             */
         }
 
         @Override
         public ByteBuffer compose() {
+
             ByteBuffer buffer = ByteBuffer.allocate(size);
+            /*
             buffer.order(ByteOrder.LITTLE_ENDIAN);
 
             buffer.put(paramVersion);
-            buffer.putShort(configFlags);
+            buffer.putInt(systemFlags);
 
             buffer.putInt(samplingCyclePeriod);
             buffer.putInt(samplingCyclePeriodFast);
             buffer.putInt(samplingFastDuration);
             buffer.putInt(samplingFastInterval);
 
-            buffer.putShort(interruptionCycleTime);
+            buffer.putShort(interruptionOnTime);
             buffer.putShort(interruptionOffTime);
             buffer.putShort(interruptionOffToOnOffset);
             buffer.putShort(interruptionOnToOffOffset);
-            buffer.putShort(interruptionUTCOffset);
+            //buffer.putShort(interruptionUTCOffset);
             buffer.put(interruptionOnFirst);
 
             buffer.put(rangeSelect);
@@ -1019,7 +1043,6 @@ public class MBP_STRUCTS {
             }
 
             buffer.putShort(samplingCycleOffset);
-            buffer.putShort(configFlagsExtended);
             // phil timeZoneOffsetMins = (IsFlagSet(configFlagsExtended, CONFIGFLAGSEXT_LOCALTIME) ? (short) ((TimeZone.getDefault().getRawOffset() + TimeZone.getDefault().getDSTSavings()) / 1000 / 60) : 0);
             buffer.putShort(timeZoneOffsetMins);
             buffer.putShort(minimumEHPE);
@@ -1041,27 +1064,30 @@ public class MBP_STRUCTS {
                 return null;
             }
             buffer.position(0);
+
+*/
             return buffer;
         }
 
         @Override
         public int compareTo(@Nullable T_PARAM_PARAMETERS that) {
+
             if (that == null) {
                 return 1;
             }
             int ret = 0;
-
+/*
             ret += this.paramVersion == that.paramVersion ? 0 : 1;
-            ret += this.configFlags == that.configFlags ? 0 : 1;
+            ret += this.systemFlags == that.systemFlags ? 0 : 1;
             ret += this.samplingCyclePeriod == that.samplingCyclePeriod ? 0 : 1;
             ret += this.samplingCyclePeriodFast == that.samplingCyclePeriodFast ? 0 : 1;
             ret += this.samplingFastDuration == that.samplingFastDuration ? 0 : 1;
             ret += this.samplingFastInterval == that.samplingFastInterval ? 0 : 1;
-            ret += this.interruptionCycleTime == that.interruptionCycleTime ? 0 : 1;
+            ret += this.interruptionOnTime == that.interruptionOnTime ? 0 : 1;
             ret += this.interruptionOffTime == that.interruptionOffTime ? 0 : 1;
             ret += this.interruptionOffToOnOffset == that.interruptionOffToOnOffset ? 0 : 1;
             ret += this.interruptionOnToOffOffset == that.interruptionOnToOffOffset ? 0 : 1;
-            ret += this.interruptionUTCOffset == that.interruptionUTCOffset ? 0 : 1;
+            //ret += this.interruptionUTCOffset == that.interruptionUTCOffset ? 0 : 1;
             ret += this.interruptionOnFirst == that.interruptionOnFirst ? 0 : 1;
             ret += this.rangeSelect == that.rangeSelect ? 0 : 1;
             ret += Arrays.equals(this.lowLimit, that.lowLimit) ? 0 : 1;
@@ -1072,7 +1098,6 @@ public class MBP_STRUCTS {
             ret += this.batteryWarnThreshold == that.batteryWarnThreshold ? 0 : 1;
            // phil ret += (MBP_STRUCTS.toString(this.notes).compareTo(MBP_STRUCTS.toString(that.notes)) == 0) ? 0 : 1;
             ret += this.samplingCycleOffset == that.samplingCycleOffset ? 0 : 1;
-            ret += this.configFlagsExtended == that.configFlagsExtended ? 0 : 1;
             //ret += this.timeZoneOffsetMins == that.timeZoneOffsetMins ? 0 : 1;
             ret += this.minimumEHPE == that.minimumEHPE ? 0 : 1;
             ret += this.minimumEHPEWaitTimeSec == that.minimumEHPEWaitTimeSec ? 0 : 1;
@@ -1081,8 +1106,10 @@ public class MBP_STRUCTS {
             ret += Arrays.equals(this.spare8, that.spare8) ? 0 : 1;
             ret += Arrays.equals(this.spare, that.spare) ? 0 : 1;
             ret += this.firmwareVerParamWrite == that.firmwareVerParamWrite ? 0 : 1;
-
+*/
             return ret;
+
+
         }
     }
 }
