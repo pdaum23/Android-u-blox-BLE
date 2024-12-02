@@ -297,6 +297,7 @@ public class BluetoothLeService {
         scheduleTimeoutAbort();
 
         mMbp = new Mbp(this);
+        mMbp.setGattServices(getSupportedGattServices());
 
         return true;
     }
@@ -393,7 +394,16 @@ public class BluetoothLeService {
                 return  mBluetoothGatt.writeCharacteristic(characteristic);
             });
         }
-        processQueue();
+        if (data.length == 1) { // test for BMM command vs normal ublox app data
+            switch (data[0]) {
+                case 0:
+                    mMbp.SendPing(characteristic, data);
+                    break;
+            }
+        }
+        else {
+            processQueue();
+        }
     }
 
     @TargetApi(26)

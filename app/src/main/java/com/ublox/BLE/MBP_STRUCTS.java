@@ -305,6 +305,7 @@ public class MBP_STRUCTS {
     final static byte MBP_READRAWANALOG_RESP = (byte) 0x9B;
     final static byte MBP_READSCALEDANALOG_RESP = (byte) 0x9C;
     final static byte MBP_CLEARFAULTHISTORY_RESP = (byte) 0x9D;
+    final static byte MBP_STARTLIVESTREAM_RESP = (byte) 0xA8;
     //From PC
     final static byte MBP_PING = 0x00;
     final static byte MBP_GETVERSION = 0x01;
@@ -336,6 +337,7 @@ public class MBP_STRUCTS {
     final static byte MBP_READRAWANALOG = 0x1B;
     final static byte MBP_READSCALEDANALOG = 0x1C;
     final static byte MBP_CLEARFAULTHISTORY = 0x1D;
+    final static byte MBP_STARTLIVESTREAM = 0x28;
     /* Dataflash Sector erase sizes */
     static final byte DATAFLASH_SECTOR_4K = (byte) 0;
     static final byte DATAFLASH_SECTOR_32K = (byte) 1;

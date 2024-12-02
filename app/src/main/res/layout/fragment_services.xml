@@ -102,7 +102,7 @@
                     android:layout_height="wrap_content" />
 
                 <Button
-                    android:id="@+id/bSendPing"
+                    android:id="@+id/bSendStartLivestream"
                     android:text="Start Livestream"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />

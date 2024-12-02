@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.ublox.BLE.Mbp;
+
 public class ServicesFragment extends Fragment {
 
     public interface IServiceFragmentInteraction {
@@ -81,7 +83,7 @@ public class ServicesFragment extends Fragment {
     public void backButtonPressed() {
         characteristicView.setVisibility(View.GONE);
     }
-
+    Mbp mMbp;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     List<BluetoothGattService> mServices = new ArrayList<>();
 
@@ -197,6 +199,7 @@ public class ServicesFragment extends Fragment {
                                     }
                                     if (bytes != null && bytes.length != 0) {
                                         try {
+                                            //mMbp.Transmit();
                                             mInteractionListener.onWrite(characteristic, bytes);
                                         } catch (Exception e) {}
                                     }
@@ -205,6 +208,24 @@ public class ServicesFragment extends Fragment {
                                     etSendInt.setText("");
                                 }
                             });
+
+                            getView().findViewById(R.id.bSendPing).setOnClickListener(new View.OnClickListener() {
+                              @Override
+                              public void onClick(View v) {
+                                  byte[] bytes = new byte[1];
+                                  bytes[0] = 0x00;
+                                  mInteractionListener.onWrite(characteristic, bytes);
+                              }
+                            });
+                            getView().findViewById(R.id.bSendStartLivestream).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    byte[] bytes = new byte[1];
+                                    bytes[0] = 0x00;
+                                    mInteractionListener.onWrite(characteristic, bytes);
+                                }
+                            });
+
                         }
 
                         TextView tvCharacteristicName = (TextView) getView().findViewById(R.id.tvCharacteristicName);

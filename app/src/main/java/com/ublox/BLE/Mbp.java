@@ -1,6 +1,8 @@
 package com.ublox.BLE;
 
+import android.bluetooth.BluetoothGattService;
 import android.content.IntentFilter;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.SystemClock;
 import android.util.Log;
@@ -14,6 +16,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -22,6 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.ublox.BLE.MBP_STRUCTS.*;
 import static com.ublox.BLE.services.BluetoothLeService.*;
+import android.bluetooth.BluetoothGattCharacteristic;
+
+import com.ublox.BLE.interfaces.BluetoothDeviceRepresentation;
+import com.ublox.BLE.services.BluetoothLeService;
+import com.ublox.BLE.utils.GattAttributes;
+import com.ublox.BLE.interfaces.BluetoothDeviceRepresentation;
 
 public class Mbp {
     private final static String TAG = Mbp.class.getSimpleName();
@@ -45,6 +55,11 @@ public class Mbp {
     private ByteBuffer udl1G1FwBuffer;
     private ByteBuffer udl1G2FwBuffer;
     private ByteBuffer vincBuffer;
+    private final String LIST_NAME = "NAME";
+    private final String LIST_UUID = "UUID";
+
+    private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+    List<BluetoothGattService> mServices = new ArrayList<>();
 
     public Mbp(com.ublox.BLE.services.BluetoothLeService service) {
         mBTService = service;
@@ -53,7 +68,66 @@ public class Mbp {
         dataBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    static IntentFilter MakeMbpUpdateIntentFilter() {
+    public void onServiceConnected() {
+        //if (!mBluetoothLeService.initialize(this)) {
+        //   finish();
+        //}
+    }
+
+    private void connectToDevice(BluetoothDeviceRepresentation bluetoothDevice) {
+        // get the information from the device scan
+        //mDevice = bluetoothDevice;
+
+        //mBluetoothLeService = new BluetoothLeService();
+        onServiceConnected();
+    }
+
+    public void setGattServices(List<BluetoothGattService> gattServices) {
+        if (gattServices == null) return;
+        mServices = gattServices;
+        String uuid = null;
+        //String unknownServiceString = getResources().getString(R.string.unknown_service);
+        //String unknownCharaString = getResources().getString(R.string.unknown_characteristic);
+        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<HashMap<String, String>>();
+        ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
+                = new ArrayList<ArrayList<HashMap<String, String>>>();
+        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+        // Loops through available GATT Services.
+        for (BluetoothGattService gattService : gattServices) {
+            HashMap<String, String> currentServiceData = new HashMap<String, String>();
+            uuid = gattService.getUuid().toString();
+
+            currentServiceData.put(
+                    LIST_NAME, GattAttributes.lookup(uuid, " "));
+            currentServiceData.put(LIST_UUID, uuid);
+            gattServiceData.add(currentServiceData);
+
+            ArrayList<HashMap<String, String>> gattCharacteristicGroupData =
+                    new ArrayList<HashMap<String, String>>();
+            List<BluetoothGattCharacteristic> gattCharacteristics =
+                    gattService.getCharacteristics();
+            ArrayList<BluetoothGattCharacteristic> charas =
+                    new ArrayList<BluetoothGattCharacteristic>();
+
+            // Loops through available Characteristics.
+            for (final BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                charas.add(gattCharacteristic);
+                HashMap<String, String> currentCharaData = new HashMap<String, String>();
+                uuid = gattCharacteristic.getUuid().toString();
+
+                currentCharaData.put(
+                        LIST_NAME, GattAttributes.lookup(uuid, " "));
+                currentCharaData.put(LIST_UUID, uuid);
+                gattCharacteristicGroupData.add(currentCharaData);
+            }
+            mGattCharacteristics.add(charas);
+            gattCharacteristicData.add(gattCharacteristicGroupData);
+        }
+    }
+
+
+        static IntentFilter MakeMbpUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         for (String action : MbpActionStrings) {
             intentFilter.addAction(action);
@@ -123,7 +197,7 @@ public class Mbp {
         return MbpError.Success;
     }
 
-    private MbpError Transmit() {
+    private MbpError Transmit(BluetoothGattCharacteristic characteristic) {
         //let pckBuf : NSMutableData = NSMutableData(bytes: [MBP_FLAG, txBuffer.address, txBuffer.protocolType, txBuffer.message], length: 4)
         ByteArrayOutputStream pckBuf = new ByteArrayOutputStream();
 
@@ -147,6 +221,7 @@ public class Mbp {
                 // send message if overflowing
                 if (pckBuf.size() >= MBP_MAX_MSG_SIZE - 1) {
                     // phil mBTService.sendMessage(ByteBuffer.wrap(pckBuf.toByteArray()));
+                    mBTService.writeCharacteristic(characteristic, pckBuf.toByteArray());
                     pckBuf.reset();
                 }
                 pckBuf.write(b ^ 0x20);
@@ -158,12 +233,14 @@ public class Mbp {
             // send message if overflowing
             if (pckBuf.size() >= MBP_MAX_MSG_SIZE - 1) {
                 // phil mBTService.sendMessage(ByteBuffer.wrap(pckBuf.toByteArray()));
+                mBTService.writeCharacteristic(characteristic, pckBuf.toByteArray());
                 pckBuf.reset();
             }
         }
 
         pckBuf.write(MBP_FLAG);
         // phil mBTService.sendMessage(ByteBuffer.wrap(pckBuf.toByteArray()));
+        mBTService.writeCharacteristic(characteristic, pckBuf.toByteArray());
         return MbpError.Success;
     }
 
@@ -431,7 +508,7 @@ public class Mbp {
         return MbpError.Success;
     }
 
-    private MbpError Encapsulate(byte mbpAddress, byte mbpProtocol, byte message, ByteBuffer payload) {
+    private MbpError Encapsulate(BluetoothGattCharacteristic characteristic, byte [] data, byte mbpAddress, byte mbpProtocol, byte message, ByteBuffer payload) {
         txBuffer.reset();
         txBuffer.setProtocolType(mbpProtocol);
         txBuffer.setAddress(mbpAddress);
@@ -442,8 +519,33 @@ public class Mbp {
         short crc = FCS16.fcs16_Add(txBuffer.getRawBuffer());
         txBuffer.appendPayload((byte) FCS16.LOWBYTE(crc));
         txBuffer.appendPayload((byte) FCS16.HIGHBYTE(crc));
-        return Transmit();
+        return Transmit(characteristic);
     }
+
+    public void SendPing(BluetoothGattCharacteristic characteristic, byte[] data) {
+        MbpError ret;
+        ret = SendGeneric(characteristic, data, MBP_PING, BMM_APP_ADDRESS, BMM_APP_PROTOCOL);
+    }
+
+    public void StartLivestream(BluetoothGattCharacteristic characteristic, byte[] data) {
+        MbpError ret;
+        ret = SendGeneric(characteristic, data, MBP_STARTLIVESTREAM, BMM_APP_ADDRESS, BMM_APP_PROTOCOL);
+        ResetLastRxValid();
+    }
+
+    private MbpError SendGeneric(BluetoothGattCharacteristic characteristic, byte[] data, byte command, byte mbpAddress, byte mbpProtocol) {
+        ResetLastRxValid();
+        return Encapsulate(characteristic, data, mbpAddress, mbpProtocol, command, null);
+    }
+
+    private MbpError SendGenericBuffer(BluetoothGattCharacteristic characteristic, byte[] data, byte command, ByteBuffer byteBuf, byte mbpAddress, byte mbpProtocol) {
+        ResetLastRxValid();
+        if (byteBuf.position() > BIP_MAXIMUM_TX_PAYLOAD) {
+            return MbpError.SizeMismatch;
+        }
+        return Encapsulate(characteristic, data, mbpAddress, mbpProtocol, command, byteBuf);
+    }
+
 
     enum MbpError {
         Success(0),
